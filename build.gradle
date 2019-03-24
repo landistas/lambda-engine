@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+
+
+group 'lambda.server'
+version '0.0.1-SNAPSHOT'
+
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+
+    compileOnly group: 'javax', name: 'javaee-api', version: '8.0'
+
+
+    //compile group: 'org.eclipse.jetty', name: 'jetty-servlets', version: '9.4.12.v20180830'
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '9.4.12.v20180830'
+    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.12.v20180830'
+    //compile group: 'org.eclipse.jetty', name: 'jetty-webapp', version: '9.4.12.v20180830'
+
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.7'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.9.7'
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/dependencieslib"
+    from configurations.runtime
+}
+
+build.dependsOn(copyToLib)
