@@ -16,7 +16,7 @@ public class FunctionServerBootstraper {
 	
 	public static void main(String[] args) {
 		try {
-			String functionFullName = System.getenv("functionName");
+			String functionFullName = System.getenv("FUNCTION_ENTRYPOINT");
 
 			FunctionExecutor.setup(functionFullName);
 

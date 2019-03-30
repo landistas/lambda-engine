@@ -1,0 +1,144 @@
+
+func otraCosa() {
+	os.Setenv("FUNCTION_CODE", theFunctionClass)
+	os.Setenv("FUNCTION_ENTRYPOINT", "chispas.Chispas.doChispas")
+
+	functionCode := os.Getenv("FUNCTION_CODE")
+	functionEntryPoint := os.Getenv("FUNCTION_ENTRYPOINT")
+
+	if functionCode == "" {
+		panic(errors.New("Empty function code"))
+	}
+
+	if functionEntryPoint == "" {
+		panic(errors.New("Empty function entry point code"))
+	}
+
+	functionNameIndex := strings.LastIndex(functionEntryPoint, ".")
+
+	packageAndClass := functionEntryPoint[:functionNameIndex]
+	functionName := functionEntryPoint[functionNameIndex+1:]
+
+	classNameIndex := strings.LastIndex(packageAndClass, ".")
+
+	packageName := packageAndClass[:classNameIndex]
+	className := packageAndClass[classNameIndex+1:]
+
+	fmt.Println(packageName)
+	fmt.Println(className)
+	fmt.Println(functionName)
+
+	workDir := fmt.Sprintf("%s/%d/src", "/tmp", time.Now().UnixNano())
+
+	packageDir := fmt.Sprintf("%s/%s", workDir, packageName)
+
+	//TODO change 0777 permissions
+	err := os.MkdirAll(packageDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
+	functionFilePath := fmt.Sprintf("%s/%s.java", workDir, className)
+
+	err = ioutil.WriteFile(functionFilePath, []byte(functionCode), os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
+	var stdBuffer bytes.Buffer
+	mw := io.MultiWriter(os.Stdout, &stdBuffer)
+
+	fmt.Println("Function file in " + functionFilePath)
+
+	javacClassPath := "/Users/hectorrodes/sources/hrodes/landistas/lambda-server-java/build/libs/*"
+
+	command := exec.Command("javac", "-cp", javacClassPath, functionFilePath)
+
+	javacOutput, err := command.CombinedOutput()
+
+	fmt.Println(fmt.Sprintf("[%s]", javacOutput))
+	if err != nil {
+
+		panic(err)
+	} else {
+		fmt.Println(fmt.Sprintf("Function compiled. Compiler output [%s]", javacOutput))
+	}
+	serverClassPath := "/Users/hectorrodes/sources/hrodes/landistas/lambda-server-java/build/dependencieslib/*"
+	executionClassPath := fmt.Sprintf("%s:%s:%s", workDir, javacClassPath, serverClassPath)
+
+	err = os.Setenv("functionName", functionEntryPoint)
+	if err != nil {
+		panic(err)
+	}
+
+	serverCommand := exec.Command("java", "-cp", executionClassPath, "org.linuxfoundation.events.kubecon.lambda.server.bootstrap.FunctionServerBootstraper")
+	serverCommand.Stdout = mw
+	serverCommand.Stderr = mw
+	err = serverCommand.Run()
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+type FunctionBodyData struct {
+	FunctionBody string
+}
+
+var theFunctionClass = `
+package chispas;
+
+import org.linuxfoundation.events.kubecon.lambda.context.Context;
+
+public class Chispas {
+
+    public static class InData {
+        private String foo;
+        private String bar;
+
+        public String getFoo() {
+            return foo;
+        }
+
+        public void setFoo(String foo) {
+            this.foo = foo;
+        }
+
+        public String getBar() {
+            return bar;
+        }
+
+        public void setBar(String bar) {
+            this.bar = bar;
+        }
+
+        public String toString() {
+            return foo + " " + bar;
+        }
+    }
+
+    public static class OutData {
+        private String result;
+
+        public String getResult() {
+            return result;
+        }
+
+        public void setResult(String result) {
+            this.result = result;
+        }
+    }
+
+    public OutData doChispas(InData in, Context ctx) {
+
+        System.out.println(in);
+
+        OutData out = new OutData();
+
+        out.setResult(in.toString());
+
+        return out;
+    }
+}
+
+`
