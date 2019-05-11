@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"lambda-server-starter/pkg/functioncompiler"
-	"lambda-server-starter/pkg/serverstarter"
+	"lambda-starter/pkg/functioncompiler"
+	"lambda-starter/pkg/serverstarter"
 	"os"
 )
 

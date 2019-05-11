@@ -1,1 +1,1 @@
-module lambda-server-starter
+module lambda-starter
